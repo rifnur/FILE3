@@ -23,6 +23,8 @@ public class MainController implements Initializable {
 
     @FXML
     ListView<String> filesList;
+    @FXML
+    ListView<String> filesListServer;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -35,6 +37,7 @@ public class MainController implements Initializable {
                         FileMessage fm = (FileMessage) am;
                         Files.write(Paths.get("client_storage/" + fm.getFilename()), fm.getData(), StandardOpenOption.CREATE);
                         refreshLocalFilesList();
+                        refreshServerFilesList();
                     }
                 }
             } catch (ClassNotFoundException | IOException e) {
@@ -46,15 +49,32 @@ public class MainController implements Initializable {
         t.setDaemon(true);
         t.start();
         refreshLocalFilesList();
+        refreshServerFilesList();
     }
 
-    public void pressOnDownloadBtn(ActionEvent actionEvent) {
-        if (tfFileName.getLength() > 0) {
-            Network.sendMsg(new FileRequest(tfFileName.getText()));
-            tfFileName.clear();
-        }
+    public void pressOnUpdateServer(ActionEvent actionEvent) {
+        refreshServerFilesList();
+    }
+    public void pressOnUpdateClient(ActionEvent actionEvent) {
+        refreshLocalFilesList();
     }
 
+public void pressOnDownloadBtn(ActionEvent actionEvent) {
+//    if (tfFileName.getLength() > 0) {
+        Network.sendMsg(new FileRequest(filesListServer.getSelectionModel().getSelectedItem()));
+//        tfFileName.clear();
+//    }
+}
+
+    public void pressOnUploadBtn(ActionEvent actionEvent) {
+//    if (tfFileName.getLength() > 0) {
+        Network.sendMsg(new FileRequest(filesList.getSelectionModel().getSelectedItem()));
+//        tfFileName.clear();
+//    }
+    }
+//    public void pressOnDeleteclientBtn(ActionEvent actionEvent) {
+//        Network.deleteMsgClient(new FileRequest(filesList.getSelectionModel().getSelectedItem()));
+//    }
     public void refreshLocalFilesList() {
         Platform.runLater(() -> {
             try {
@@ -68,4 +88,18 @@ public class MainController implements Initializable {
             }
         });
     }
+    public void refreshServerFilesList() {
+        Platform.runLater(() -> {
+            try {
+                filesListServer.getItems().clear();
+                Files.list(Paths.get("server_storage"))
+                        .filter(p -> !Files.isDirectory(p))
+                        .map(p -> p.getFileName().toString())
+                        .forEach(o -> filesListServer.getItems().add(o));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
 }
